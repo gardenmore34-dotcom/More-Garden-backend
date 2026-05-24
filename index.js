@@ -19,7 +19,11 @@ const app = express();
 
 // Middleware
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 app.use(express.json()); // for JSON
 app.use(express.urlencoded({ extended: true })); // ADD THIS LINE
 
@@ -45,13 +49,19 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/testimonials', testimonialRoutes);
 
-// Connect to MongoDB and start server
-const PORT = 4000;
+// Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
-    app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+    // Only listen in local dev (not on Vercel)
+    if (process.env.NODE_ENV !== 'production') {
+      const PORT = process.env.PORT || 4000;
+      app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+    }
   })
   .catch((err) => {
     console.error('❌ MongoDB connection failed:', err.message);
   });
+
+// Export app for Vercel serverless
+export default app;
